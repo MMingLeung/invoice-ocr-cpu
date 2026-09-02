@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CPU-only Chinese invoice OCR pipeline: RapidOCR + ONNX Runtime, PP-OCRv4 mobile."""
+"""CPU-only Chinese invoice OCR pipeline: RapidOCR + ONNX Runtime, PP-OCRv6 tiny."""
 from __future__ import annotations
 
 import json
@@ -92,8 +92,8 @@ def make_rapidocr_engine(use_cls: bool = False, intra_threads: int = 2):
     from rapidocr import EngineType, LangDet, LangRec, ModelType, OCRVersion, RapidOCR
 
     root = Path(__file__).resolve().parent / "models"
-    det = root / "ch_PP-OCRv4_det_mobile.onnx"
-    rec = root / "ch_PP-OCRv4_rec_mobile.onnx"
+    det = root / "PP-OCRv6_det_tiny.onnx"
+    rec = root / "PP-OCRv6_rec_tiny.onnx"
     cls = root / "ch_ppocr_mobile_v2.0_cls_mobile.onnx"
     params = {
         "Global.use_cls": use_cls,
@@ -106,18 +106,21 @@ def make_rapidocr_engine(use_cls: bool = False, intra_threads: int = 2):
         "EngineConfig.onnxruntime.use_cuda": False,
         "Det.engine_type": EngineType.ONNXRUNTIME,
         "Det.lang_type": LangDet.CH,
-        "Det.model_type": ModelType.MOBILE,
-        "Det.ocr_version": OCRVersion.PPOCRV4,
-        "Det.model_path": str(det),
+        "Det.model_type": ModelType.TINY,
+        "Det.ocr_version": OCRVersion.PPOCRV6,
         "Rec.engine_type": EngineType.ONNXRUNTIME,
         "Rec.lang_type": LangRec.CH,
-        "Rec.model_type": ModelType.MOBILE,
-        "Rec.ocr_version": OCRVersion.PPOCRV4,
-        "Rec.model_path": str(rec),
+        "Rec.model_type": ModelType.TINY,
+        "Rec.ocr_version": OCRVersion.PPOCRV6,
     }
+    if det.is_file():
+        params["Det.model_path"] = str(det)
+    if rec.is_file():
+        params["Rec.model_path"] = str(rec)
     if use_cls:
         params["Cls.engine_type"] = EngineType.ONNXRUNTIME
-        params["Cls.model_path"] = str(cls)
+        if cls.is_file():
+            params["Cls.model_path"] = str(cls)
     return RapidOCR(params=params)
 
 
